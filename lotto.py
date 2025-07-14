@@ -51,7 +51,24 @@ def draw_numbers(amount: int) -> set[int]:
 def check_hits(user_numbers: set[int], drawn_numbers: set[int]) -> set[int]:
     return user_numbers & drawn_numbers
 
+
+def play(amount: int) -> None:
+    while True:
+
+        user_numbers = get_user_numbers(amount)
+        drawn_numbers = draw_numbers(amount)
+        hits = check_hits(user_numbers, drawn_numbers)
+        print(hits)
+
+        print('Do you want to play again? (y/n)')
+        answer = input().lower()
+
+        if answer not in ('y', 'yes'):
+            break
+
+    print('Game Over!')
+
 if __name__ == '__main__':
 
-    print(get_user_numbers(5))
+    play(5)
 

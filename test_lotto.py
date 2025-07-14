@@ -1,6 +1,7 @@
+from unittest.mock import patch, call
 import pytest
 
-from lotto import get_user_numbers, is_number, to_number, is_in_range, validate, draw_numbers, check_hits
+from lotto import get_user_numbers, is_number, to_number, is_in_range, validate, draw_numbers, check_hits, play
 
 
 def test_get_user_numbers_all_correct(monkeypatch):
@@ -9,10 +10,19 @@ def test_get_user_numbers_all_correct(monkeypatch):
     assert get_user_numbers(5) == {1, 2, 3, 4, 5}
 
 
-def test_user_digits_with_invalid_and_duplicates(monkeypatch):
+def test_get_user_numbers_with_invalid_and_duplicates(monkeypatch):
     user_numbers = iter(['1', '55', 'ten', '1', '5', '10'])
     monkeypatch.setattr('builtins.input', lambda *args: next(user_numbers))
     assert get_user_numbers(3) == {1, 5, 10}
+
+
+def test_get_user_numbers_shows_info_for_user(monkeypatch, capfd):
+    user_numbers = iter(['3', '5', '18'])
+    monkeypatch.setattr('builtins.input', lambda *args: next(user_numbers))
+    get_user_numbers(3)
+    captured = capfd.readouterr()
+    assert 'Please enter a number' in captured.out
+
 
 @pytest.mark.parametrize(
     'number_text, expected',
@@ -76,7 +86,7 @@ def test_is_in_range(number, expected):
         ('100', [is_number, to_number, is_in_range], False),
         ('250', [is_number, to_number], 250),
         ('abc', [is_number, to_number], False),
-        ('5', [lambda x: False,to_number], False)
+        ('5', [lambda x: False, to_number], False)
     ]
 )
 def test_validate_various_data(number_text, validators, expected):
@@ -88,6 +98,22 @@ def test_validate_rises_when_no_validators():
         validate('5', [])
 
 
+def test_validate_chain_brakes_on_false():
+    calls = []
+
+    def f1(x):
+        calls.append('f1')
+        return False
+
+    def f2(x):
+        calls.append('f2')
+        return 42
+
+    result = validate('4', [f1, f2])
+    assert result == False
+    assert calls == ['f1']
+
+
 @pytest.mark.parametrize('amount', [5, 6])
 def test_draw_numbers_correct_length(amount):
     assert len(draw_numbers(amount)) == amount
@@ -95,7 +121,7 @@ def test_draw_numbers_correct_length(amount):
 
 def test_draw_numbers_in_range():
     numbers = draw_numbers(6)
-    assert all(1 <= number <= 49  for number in numbers)
+    assert all(1 <= number <= 49 for number in numbers)
 
 
 def test_draw_numbers_unique():
@@ -142,3 +168,14 @@ def test_check_hits_both_empty():
     user_numbers = set()
     drawn_numbers = set()
     assert check_hits(user_numbers, drawn_numbers) == set()
+
+
+def test_play_helpers_called():
+    with patch('lotto.get_user_numbers', return_value={1, 2, 3, 4, 5}) as mock_user_numbers, \
+            patch('lotto.draw_numbers', return_value={10, 11, 12, 13, 14}) as mock_draw_numbers, \
+            patch('lotto.check_hits', return_value=set()) as mock_check_hits:
+        play(5)
+
+        mock_user_numbers.assert_called_once_with(5)
+        mock_draw_numbers.assert_called_once_with(5)
+        mock_check_hits.assert_called_once_with({1, 2, 3, 4, 5}, {10, 11, 12, 13, 14})
