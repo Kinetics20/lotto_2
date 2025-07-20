@@ -52,13 +52,39 @@ def check_hits(user_numbers: set[int], drawn_numbers: set[int]) -> set[int]:
     return user_numbers & drawn_numbers
 
 
+def show_results(hits: set[int]) -> None:
+    hit_count = len(hits)
+    plural = 's' if hit_count != 1 else ''
+
+    message = f'You hit {hit_count} number{plural}.'
+
+    if hit_count > 0:
+        message += f'\nMatched number{plural}: {", ".join(map(str, sorted(hits)))}.'
+
+    if hit_count <= 3:
+        message += '\nBetter luck next time!'
+
+    elif hit_count == 4:
+        message += '\nWell done! You won 5 PLN.'
+
+    elif hit_count == 5:
+        message += '\nGreat job! You won 100 PLN'
+
+    elif hit_count == 6:
+        message += '\nYou won 3 000 000 PLN!.'
+
+    print(message)
+
+
+
+
 def play(amount: int) -> None:
     while True:
 
         user_numbers = get_user_numbers(amount)
         drawn_numbers = draw_numbers(amount)
         hits = check_hits(user_numbers, drawn_numbers)
-        print(hits)
+        show_results(hits)
 
         print('Do you want to play again? (y/n)')
         answer = input().lower()
@@ -70,5 +96,5 @@ def play(amount: int) -> None:
 
 if __name__ == '__main__':
 
-    play(5)
+    play(7)
 

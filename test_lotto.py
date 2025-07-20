@@ -1,7 +1,8 @@
 from unittest.mock import patch, call
 import pytest
 
-from lotto import get_user_numbers, is_number, to_number, is_in_range, validate, draw_numbers, check_hits, play
+from lotto import get_user_numbers, is_number, to_number, is_in_range, validate, draw_numbers, check_hits, play, \
+    show_results
 
 
 def test_get_user_numbers_all_correct(monkeypatch):
@@ -173,9 +174,44 @@ def test_check_hits_both_empty():
 def test_play_helpers_called():
     with patch('lotto.get_user_numbers', return_value={1, 2, 3, 4, 5}) as mock_user_numbers, \
             patch('lotto.draw_numbers', return_value={10, 11, 12, 13, 14}) as mock_draw_numbers, \
-            patch('lotto.check_hits', return_value=set()) as mock_check_hits:
+            patch('lotto.check_hits', return_value=set()) as mock_check_hits, \
+            patch('builtins.input', return_value='n'), \
+            patch('lotto.show_results', return_value=None) as mock_show_results:
         play(5)
 
         mock_user_numbers.assert_called_once_with(5)
         mock_draw_numbers.assert_called_once_with(5)
         mock_check_hits.assert_called_once_with({1, 2, 3, 4, 5}, {10, 11, 12, 13, 14})
+        mock_show_results.assert_called_once_with(set())
+
+
+def test_play_again():
+    responses = iter(['y', 'n'])
+
+    with patch('lotto.get_user_numbers', return_value={1, 2, 3, 4, 5}) as mock_user_numbers, \
+        patch ('builtins.input', side_effect=lambda: next(responses)), \
+            patch('builtins.print') as mock_print, \
+            patch('lotto.show_results', return_value=None):
+        play(5)
+
+        mock_print.assert_any_call('Game Over!')
+        assert mock_print.call_count == 3
+
+
+@pytest.mark.parametrize(
+    'hits, message',
+    [
+        (set(), 'You hit 0 numbers.\nBetter luck next time!\n'),
+        ({1}, 'You hit 1 number.\nMatched number: 1.\nBetter luck next time!\n'),
+        ({1, 2}, 'You hit 2 numbers.\nMatched numbers: 1, 2.\nBetter luck next time!\n'),
+        ({1, 2, 3}, 'You hit 3 numbers.\nMatched numbers: 1, 2, 3.\nBetter luck next time!\n'),
+        ({1, 2, 3, 4}, 'You hit 4 numbers.\nMatched numbers: 1, 2, 3, 4.\nWell done! You won 5 PLN.\n'),
+        ({1, 2, 3, 4, 5}, 'You hit 5 numbers.\nMatched numbers: 1, 2, 3, 4, 5.\nGreat job! You won 100 PLN\n'),
+        ({1, 2, 3, 4, 5, 6}, 'You hit 6 numbers.\nMatched numbers: 1, 2, 3, 4, 5, 6.\nYou won 3 000 000 PLN!.\n'),
+        ({1, 2, 3, 4, 5, 6, 7}, 'You hit 7 numbers.\nMatched numbers: 1, 2, 3, 4, 5, 6, 7.\n')
+    ]
+)
+def test_show_results(hits, message, capfd):
+    show_results(hits)
+    captured = capfd.readouterr()
+    assert message in captured.out
