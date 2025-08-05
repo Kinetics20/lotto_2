@@ -134,6 +134,9 @@ Results (0.17s):
       58 passed
 ```
 
+![Test output](docs/test_lotto_pytest_sugar.jpg)
+
+
 ---
 
 ## 📂 Project Structure
