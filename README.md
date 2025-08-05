@@ -67,7 +67,7 @@ pytest -v --tb=short
 
 This project includes **58 tests**. Example test run with `pytest-sugar`:
 
-```text
+```python
 plugins: sugar-1.0.0
 collected 58 items                                                                                                                                                                                                        
 
