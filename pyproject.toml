@@ -1,7 +1,9 @@
 [project]
 name = "lotto-2"
 version = "0.1.0"
-description = "Add your description here"
+description = "Lotto CLI Game with TDD"
+authors = ["Piotr Lipinski <kinetics20@gmail.com>"]
+license = "Beerware"
 requires-python = ">=3.12"
 dependencies = [
     "pytest>=8.4.1",
